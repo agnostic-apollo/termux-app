@@ -85,6 +85,9 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
     public void onCreate() {
         mActivity.getTerminalView().setTextSize(mActivity.getPreferences().getFontSize());
         mActivity.getTerminalView().setKeepScreenOn(mActivity.getPreferences().shouldKeepScreenOn());
+        mActivity.getTerminalView().setSoftKeyboardKeyCharacterMap("");
+        mActivity.getTerminalView().setHardwareKeyboardKeyCharacterMap("");
+
     }
 
     /**

@@ -83,6 +83,10 @@ public final class TerminalView extends View {
 
     private final boolean mAccessibilityEnabled;
 
+    private final KeyCharacterMap mVirtualKeyboardKeyCharacterMap = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD);
+    private KeyCharacterMap mSoftKeyboardKeyCharacterMap = null;
+    private KeyCharacterMap mHardwareKeyboardKeyCharacterMap = null;
+
     private static final String LOG_TAG = "TerminalView";
 
     public TerminalView(Context context, AttributeSet attributes) { // NO_UCD (unused code)
@@ -237,6 +241,32 @@ public final class TerminalView extends View {
         TERMINAL_VIEW_KEY_LOGGING_ENABLED = value;
     }
 
+    /**
+     * Load the {@link KeyCharacterMap} to from a file to use for custom mapping of soft keyboard
+     * key codes into {@link #mSoftKeyboardKeyCharacterMap}.
+     *
+     * @param path The path to the key character map files `.kcm` file.
+     */
+    public void setSoftKeyboardKeyCharacterMap(String path) {
+        if (path != null)
+            mSoftKeyboardKeyCharacterMap = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD);
+        else
+            mSoftKeyboardKeyCharacterMap = null;
+    }
+
+    /**
+     * Load the {@link KeyCharacterMap} to from a file to use for custom mapping of hardware keyboard
+     * key codes into {@link #mHardwareKeyboardKeyCharacterMap}.
+     *
+     * @param path The path to the key character map files `.kcm` file.
+     */
+    public void setHardwareKeyboardKeyCharacterMap(String path) {
+        if (path != null)
+            mHardwareKeyboardKeyCharacterMap = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD);
+        else
+            mHardwareKeyboardKeyCharacterMap = null;
+    }
+
 
 
     /**
@@ -331,6 +361,19 @@ public final class TerminalView extends View {
 
             void sendTextToTerminal(CharSequence text) {
                 stopTextSelectionMode();
+
+                if (mSoftKeyboardKeyCharacterMap != null) {
+                    KeyEvent[] events = mVirtualKeyboardKeyCharacterMap.getEvents(text.toString().toCharArray());
+                    if (events != null) {
+                        for (KeyEvent event : events) {
+                           if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                               onKeyDown(event.getKeyCode(), event);
+                           }
+                        }
+                    }
+                    return;
+                }
+
                 final int textLengthInChars = text.length();
                 for (int i = 0; i < textLengthInChars; i++) {
                     char firstChar = text.charAt(i);
@@ -345,6 +388,9 @@ public final class TerminalView extends View {
                     } else {
                         codePoint = firstChar;
                     }
+
+                   if (mClient.readShiftKey())
+                        codePoint = Character.toUpperCase(codePoint);
 
                     boolean ctrlHeld = false;
                     if (codePoint <= 31 && codePoint != 27) {
@@ -607,10 +653,25 @@ public final class TerminalView extends View {
         if (event.isAltPressed() || leftAltDown) keyMod |= KeyHandler.KEYMOD_ALT;
         if (shiftDown) keyMod |= KeyHandler.KEYMOD_SHIFT;
         if (event.isNumLockOn()) keyMod |= KeyHandler.KEYMOD_NUM_LOCK;
+
         // https://github.com/termux/termux-app/issues/731
-        if (!fnDown && handleKeyCode(keyCode, keyMod)) {
-            if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) mClient.logInfo(LOG_TAG, "handleKeyCode() took key event");
-            return true;
+        if (!event.isFunctionPressed()) {
+            int result = mapKeyCode(event.getKeyCode(), event.getDeviceId(), controlDown, leftAltDown, shiftDown, fnDown);
+            if (result != 0) {
+                keyCode = result;
+                keyMod = 0;
+            }
+
+            if (handleKeyCode(keyCode, keyMod)) {
+                if (TERMINAL_VIEW_KEY_LOGGING_ENABLED)
+                    mClient.logInfo(LOG_TAG, "handleKeyCode() took key event");
+                return true;
+            }
+
+            if (result != 0) {
+                inputCodePoint(result, false, false);
+                return true;
+            }
         }
 
         // Clear Ctrl since we handle that ourselves:
@@ -624,7 +685,6 @@ public final class TerminalView extends View {
         int effectiveMetaState = event.getMetaState() & ~bitsToClear;
 
         if (shiftDown) effectiveMetaState |= KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON;
-        if (fnDown) effectiveMetaState |= KeyEvent.META_FUNCTION_ON;
 
         int result = event.getUnicodeChar(effectiveMetaState);
         if (TERMINAL_VIEW_KEY_LOGGING_ENABLED)
@@ -651,6 +711,34 @@ public final class TerminalView extends View {
         if (mCombiningAccent != oldCombiningAccent) invalidate();
 
         return true;
+    }
+
+    public int mapKeyCode(int keyCode, int deviceId, boolean ctrlDown, boolean altDown, boolean shiftDown, boolean fnDown) {
+        KeyCharacterMap keyCharacterMap = null;
+        if (deviceId == KeyCharacterMap.VIRTUAL_KEYBOARD) {
+            if (mSoftKeyboardKeyCharacterMap != null)
+                keyCharacterMap = mSoftKeyboardKeyCharacterMap;
+        } else {
+            if (mHardwareKeyboardKeyCharacterMap != null)
+                keyCharacterMap = mHardwareKeyboardKeyCharacterMap;
+        }
+
+        if (keyCharacterMap == null) return 0;
+
+        int metaState = 0;
+        if (ctrlDown) metaState |= KeyEvent.META_CTRL_ON;
+        if (altDown) metaState |= KeyEvent.META_ALT_ON;
+        if (shiftDown) metaState |= KeyEvent.META_SHIFT_ON;
+        if (fnDown) metaState |= KeyEvent.META_FUNCTION_ON;
+
+        int result = keyCharacterMap.get(keyCode, metaState);
+        if (TERMINAL_VIEW_KEY_LOGGING_ENABLED)
+            mClient.logInfo(LOG_TAG, "mapKeyCode(deviceId=" + deviceId + ", keyCode=" + keyCode + ", metaState=" + metaState + ") returned: " + result + ", isDeadKey: " + ((result & KeyCharacterMap.COMBINING_ACCENT) != 0));
+        // If keyCode found and is not a dead key
+        if (result != 0 && (result & KeyCharacterMap.COMBINING_ACCENT) == 0) {
+            return result;
+        } else
+            return 0;
     }
 
     public void inputCodePoint(int codePoint, boolean controlDownFromEvent, boolean leftAltDownFromEvent) {
