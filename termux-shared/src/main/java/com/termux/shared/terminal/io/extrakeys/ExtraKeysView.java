@@ -463,12 +463,12 @@ public final class ExtraKeysView extends GridLayout {
 
 
 
-    private void onExtraKeyButtonClick(View view, ExtraKeyButton buttonInfo, Button button) {
+    public void onExtraKeyButtonClick(View view, ExtraKeyButton buttonInfo, Button button) {
         if (mExtraKeysViewClient != null)
             mExtraKeysViewClient.onExtraKeyButtonClick(view, buttonInfo, button);
     }
 
-    private void performExtraKeyButtonHapticFeedback(View view, ExtraKeyButton buttonInfo, Button button) {
+    public void performExtraKeyButtonHapticFeedback(View view, ExtraKeyButton buttonInfo, Button button) {
         if (mExtraKeysViewClient != null) {
             // If client handled the feedback, then just return
             if (mExtraKeysViewClient.performExtraKeyButtonHapticFeedback(view, buttonInfo, button))
@@ -491,7 +491,7 @@ public final class ExtraKeysView extends GridLayout {
 
 
 
-    private void onAnyExtraKeyButtonClick(View view, @NonNull ExtraKeyButton buttonInfo, Button button) {
+    public void onAnyExtraKeyButtonClick(View view, @NonNull ExtraKeyButton buttonInfo, Button button) {
         if (isSpecialButton(buttonInfo)) {
             if (mLongPressCount > 0) return;
             SpecialButtonState state = mSpecialButtons.get(SpecialButton.valueOf(buttonInfo.getKey()));
@@ -532,7 +532,7 @@ public final class ExtraKeysView extends GridLayout {
         }
     }
 
-    private void stopScheduledExecutors() {
+    public void stopScheduledExecutors() {
         if (mScheduledExecutor != null) {
             mScheduledExecutor.shutdownNow();
             mScheduledExecutor = null;
@@ -544,7 +544,7 @@ public final class ExtraKeysView extends GridLayout {
         }
     }
 
-    private class SpecialButtonsLongHoldRunnable implements Runnable {
+    public class SpecialButtonsLongHoldRunnable implements Runnable {
         private final SpecialButtonState mState;
 
         public SpecialButtonsLongHoldRunnable(SpecialButtonState state) {
@@ -561,7 +561,7 @@ public final class ExtraKeysView extends GridLayout {
 
 
 
-    void showPopup(View view, ExtraKeyButton extraButton) {
+    public void showPopup(View view, ExtraKeyButton extraButton) {
         int width = view.getMeasuredWidth();
         int height = view.getMeasuredHeight();
         Button button;
@@ -591,7 +591,7 @@ public final class ExtraKeysView extends GridLayout {
         mPopupWindow.showAsDropDown(view, 0, -2 * height);
     }
 
-    private void dismissPopup() {
+    public void dismissPopup() {
         mPopupWindow.setContentView(null);
         mPopupWindow.dismiss();
         mPopupWindow = null;
@@ -629,7 +629,7 @@ public final class ExtraKeysView extends GridLayout {
         return true;
     }
 
-    private Button createSpecialButton(String buttonKey, boolean needUpdate) {
+    public Button createSpecialButton(String buttonKey, boolean needUpdate) {
         SpecialButtonState state = mSpecialButtons.get(SpecialButton.valueOf(buttonKey));
         if (state == null) return null;
         state.setIsCreated(true);
@@ -646,7 +646,7 @@ public final class ExtraKeysView extends GridLayout {
     /**
      * General util function to compute the longest column length in a matrix.
      */
-    static int maximumLength(Object[][] matrix) {
+    public static int maximumLength(Object[][] matrix) {
         int m = 0;
         for (Object[] row : matrix)
             m = Math.max(m, row.length);
