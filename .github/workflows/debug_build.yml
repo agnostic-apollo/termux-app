@@ -14,43 +14,60 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone repository
-      uses: actions/checkout@v2
-    - name: Build
-      run: |
-        ./gradlew assembleDebug
-    - name: Store generated universal APK file
-      uses: actions/upload-artifact@v2
-      with:
-        name: termux-app-universal
-        path: |
-            ./app/build/outputs/apk/debug/termux-app-universal-debug.apk
+      - name: Clone repository
+        uses: actions/checkout@v2
+
+      - name: Set vars
+        run: |
+          # Set NEW_VERSION_NAME to "<CURRENT_VERSION_NAME>+<last_commit_hash>"
+          CURRENT_VERSION_NAME_REGEX='\s+versionName "([^"]+)"$'
+          CURRENT_VERSION_NAME="$(grep -m 1 -E "$CURRENT_VERSION_NAME_REGEX" ./app/build.gradle | sed -r "s/$CURRENT_VERSION_NAME_REGEX/\1/")"
+          NEW_VERSION_NAME="$CURRENT_VERSION_NAME+${GITHUB_SHA:0:7}"
+          echo "TERMUX_APP_VERSION_NAME=$NEW_VERSION_NAME" >> $GITHUB_ENV # Used by app/build.gradle
+          echo "TERMUX_APK_VERSION_TAG=v$NEW_VERSION_NAME-github-debug" >> $GITHUB_ENV # Used by app/build.gradle
+
+      - name: Echo version
+        run: echo "Building APKs for '$TERMUX_APP_VERSION_NAME'"
+
+      - name: Build
+        run: ./gradlew assembleDebug
+
+      - name: Attach generated universal APK file
+        uses: actions/upload-artifact@v2
+        with:
+          name: termux-app_${{ env.TERMUX_APK_VERSION_TAG }}_universal
+          path: |
+              ./app/build/outputs/apk/debug/termux-app_${{ env.TERMUX_APK_VERSION_TAG }}_universal.apk
+              ./app/build/outputs/apk/debug/output-metadata.json
+
+      - name: Attach generated arm64-v8a APK file
+        uses: actions/upload-artifact@v2
+        with:
+          name: termux-app_${{ env.TERMUX_APK_VERSION_TAG }}_arm64-v8a
+          path: |
+            ./app/build/outputs/apk/debug/termux-app_${{ env.TERMUX_APK_VERSION_TAG }}_arm64-v8a.apk
             ./app/build/outputs/apk/debug/output-metadata.json
-    - name: Store generated arm64-v8a APK file
-      uses: actions/upload-artifact@v2
-      with:
-        name: termux-app-arm64-v8a
-        path: |
-          ./app/build/outputs/apk/debug/termux-app-arm64-v8a-debug.apk
-          ./app/build/outputs/apk/debug/output-metadata.json
-    - name: Store generated armeabi-v7a APK file
-      uses: actions/upload-artifact@v2
-      with:
-        name: termux-app-armeabi-v7a
-        path: |
-          ./app/build/outputs/apk/debug/termux-app-armeabi-v7a-debug.apk
-          ./app/build/outputs/apk/debug/output-metadata.json
-    - name: Store generated x86_64 APK file
-      uses: actions/upload-artifact@v2
-      with:
-        name: termux-app-x86_64
-        path: |
-          ./app/build/outputs/apk/debug/termux-app-x86_64-debug.apk
-          ./app/build/outputs/apk/debug/output-metadata.json
-    - name: Store generated x86 APK file
-      uses: actions/upload-artifact@v2
-      with:
-        name: termux-app-x86
-        path: |
-          ./app/build/outputs/apk/debug/termux-app-x86-debug.apk
-          ./app/build/outputs/apk/debug/output-metadata.json
+
+      - name: Attach generated armeabi-v7a APK file
+        uses: actions/upload-artifact@v2
+        with:
+          name: termux-app_${{ env.TERMUX_APK_VERSION_TAG }}_armeabi-v7a
+          path: |
+            ./app/build/outputs/apk/debug/termux-app_${{ env.TERMUX_APK_VERSION_TAG }}_armeabi-v7a.apk
+            ./app/build/outputs/apk/debug/output-metadata.json
+
+      - name: Attach generated x86_64 APK file
+        uses: actions/upload-artifact@v2
+        with:
+          name: termux-app_${{ env.TERMUX_APK_VERSION_TAG }}_x86_64
+          path: |
+            ./app/build/outputs/apk/debug/termux-app_${{ env.TERMUX_APK_VERSION_TAG }}_x86_64.apk
+            ./app/build/outputs/apk/debug/output-metadata.json
+
+      - name: Attach generated x86 APK file
+        uses: actions/upload-artifact@v2
+        with:
+          name: termux-app_${{ env.TERMUX_APK_VERSION_TAG }}_x86
+          path: |
+            ./app/build/outputs/apk/debug/termux-app_${{ env.TERMUX_APK_VERSION_TAG }}_x86.apk
+            ./app/build/outputs/apk/debug/output-metadata.json
