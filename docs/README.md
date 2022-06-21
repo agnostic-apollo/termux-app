@@ -8,6 +8,20 @@ permalink: /docs/termux-app/
 
 Welcome to documentation for the [Termux App].
 
+# Termux Docs
+
+Welcome to documentation for the [Termux App].
+
+
+# 1. Test
+
+test
+
+# 2. Testy
+
+testy
+
+
 ---
 &nbsp;&nbsp;
 
