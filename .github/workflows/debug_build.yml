@@ -20,6 +20,11 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v2
 
+      - name: Install openjdk-17-jdk
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install openjdk-17-jdk
+
       - name: Build APKs
         shell: bash {0}
         env:
