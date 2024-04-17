@@ -27,10 +27,13 @@ jobs:
         run: |
           exit_on_error() { echo "$1"; exit 1; }
 
-          if [ ! -f "$JAVA_HOME_17_X64/bin/java" ]; then
-              exit_on_error "jdk 17 binary not found at path '$JAVA_HOME_17_X64/bin/java'."
+          if [ ! -f "$JAVA_HOME_17_X64/bin/javac" ]; then
+              exit_on_error "jdk 17 binary not found at path '$JAVA_HOME_17_X64/bin/javac'."
           fi
-          "$JAVA_HOME_17_X64/bin/java" --version
+          $JAVA_HOME_17_X64/bin/java --version
+          $JAVA_HOME_17_X64/bin/javac --version
+          ls /usr/lib/jvm
+          echo "JAVA_HOME_17_X64=$JAVA_HOME_17_X64"
 
           echo "Setting vars"
 
