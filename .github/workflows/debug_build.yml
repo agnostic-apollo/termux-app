@@ -27,8 +27,8 @@ jobs:
         run: |
           exit_on_error() { echo "$1"; exit 1; }
 
-          if [ ! -f "$JAVA_HOME_17_X64/bin/javac" ]; then
-              exit_on_error "jdk 17 binary not found at path '$JAVA_HOME_17_X64/bin/javac'."
+          if [ ! -f "$JAVA_HOME_17_X64/bin/javac" ] || [ ! -x "$JAVA_HOME_17_X64/bin/javac" ]; then
+              exit_on_error "jdk 17 binary not found at path '$JAVA_HOME_17_X64/bin/javac' or is not executable."
           fi
           $JAVA_HOME_17_X64/bin/java --version
           $JAVA_HOME_17_X64/bin/javac --version
