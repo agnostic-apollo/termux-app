@@ -30,6 +30,7 @@ jobs:
           if [ ! -f "$JAVA_HOME_17_X64/bin/java" ]; then
               exit_on_error "jdk 17 binary not found at path '$JAVA_HOME_17_X64/bin/java'."
           fi
+          "$JAVA_HOME_17_X64/bin/java" --version
 
           echo "Setting vars"
 
