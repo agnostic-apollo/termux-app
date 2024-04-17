@@ -22,15 +22,12 @@ jobs:
 
       - name: Install openjdk-17-jdk
         run: |
-          sudo apt-get update && sudo apt-get -q -y install openjdk-17-jdk
-          echo /etc/apt/apt-mirrors.txt:
-          cat /etc/apt/apt-mirrors.txt
-          echo /etc/apt/sources.list:
-          cat /etc/apt/sources.list
+          sudo apt-get -qq update && sudo apt-get -qq -y install openjdk-17-jdk
           apt show openjdk-17-jdk
           java --version
+          ls /usr/lib/jvm
           ls /usr/lib/jvm/java-17-openjdk-amd64
-          export GRADLE_OPTS="-Dorg.gradle.java.home=/usr/lib/jvm/java-17-openjdk-amd64"
+         
 
       - name: Build APKs
         shell: bash {0}
@@ -66,6 +63,7 @@ jobs:
           export TERMUX_APP_VERSION_NAME="${RELEASE_VERSION_NAME/v/}" # Used by app/build.gradle
           export TERMUX_APK_VERSION_TAG="$APK_VERSION_TAG" # Used by app/build.gradle
           export TERMUX_PACKAGE_VARIANT="${{ env.PACKAGE_VARIANT }}" # Used by app/build.gradle
+          export GRADLE_OPTS="-Dorg.gradle.java.home=/usr/lib/jvm/java-17-openjdk-amd64"
           if ! ./gradlew assembleDebug; then
             exit_on_error "Build failed for '$APK_VERSION_TAG' build."
           fi
