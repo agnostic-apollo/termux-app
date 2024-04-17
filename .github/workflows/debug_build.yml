@@ -22,8 +22,10 @@ jobs:
 
       - name: Install openjdk-17-jdk
         run: |
-          sudo apt-get update
-          sudo apt-get -y install openjdk-17-jdk
+          sudo apt-get update && sudo apt-get -q -y install openjdk-17-jdk
+          cat /etc/apt/apt-mirrors.txt
+          cat /etc/apt/sources.list
+          apt show openjdk-17-jdk
 
       - name: Build APKs
         shell: bash {0}
